@@ -1,3 +1,35 @@
-# Default ignored files
+# =========================
+# IntelliJ IDEA / JetBrains
+# =========================
 .idea/
+*.iml
+*.iws
+out/
+shelf/
+workspace.xml
+tasks.xml
+dataSources/
+dataSources.local.xml
+httpRequests/
+
+# =========================
+# Maven build
+# =========================
+target/
+*.log
+*.tmp
+
+# =========================
+# OS-generated files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Spring Boot specifics
+# =========================
+*.pid
+*.seed
+*.properties~
+*.yml~
 
