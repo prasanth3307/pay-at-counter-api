@@ -20,7 +20,7 @@ import java.time.Instant;
 })
 public class MenuItem {
     @Id
-    @Column(name = "menu_item_id", nullable = false, length = 36)
+    @Column(name = "menu_item_id", nullable = false, length = 36 , columnDefinition = "char(36)")
     private String menuItemId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -44,10 +44,8 @@ public class MenuItem {
     @Column(name = "preparation_time", length = 50)
     private String preparationTime;
 
-    @ColumnDefault("'MILD'")
-    @Lob
-    @Column(name = "spicy_level")
-    private String spicyLevel;
+    @Column(length = 20, nullable = false)
+    private String spicyLevel = "MILD";
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")

@@ -19,7 +19,7 @@ import java.time.Instant;
 })
 public class MenuItemImage {
     @Id
-    @Column(name = "image_id", nullable = false, length = 36)
+    @Column(name = "image_id", nullable = false, length = 36 , columnDefinition = "char(36)")
     private String imageId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

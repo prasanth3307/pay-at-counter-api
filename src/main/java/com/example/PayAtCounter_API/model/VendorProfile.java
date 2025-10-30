@@ -18,7 +18,7 @@ import java.time.Instant;
 
 public class VendorProfile {
     @Id
-    @Column(name = "vendor_id", nullable = false, length = 36)
+    @Column(name = "vendor_id", nullable = false, length = 36 , columnDefinition = "char(36)")
     private String vendorId;
 
     @Column(name = "vendor_name", nullable = false)
@@ -30,10 +30,8 @@ public class VendorProfile {
     @Column(name = "phone_no", nullable = false, length = 15)
     private String phoneNo;
 
-    @ColumnDefault("'ACTIVE'")
-    @Lob
-    @Column(name = "status")
-    private String status;
+    @Column(length = 20, nullable = false)
+    private String status = "ACTIVE";
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
