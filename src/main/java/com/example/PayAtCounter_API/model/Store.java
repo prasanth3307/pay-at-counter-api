@@ -21,7 +21,7 @@ import java.time.Instant;
 })
 public class Store {
     @Id
-    @Column(name = "store_id", nullable = false, length = 36)
+    @Column(name = "store_id", nullable = false, length = 36 , columnDefinition = "char(36)")
     private String storeId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

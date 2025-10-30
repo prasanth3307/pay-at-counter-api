@@ -17,7 +17,7 @@ import java.time.Instant;
 })
 public class RestaurantTable {
     @Id
-    @Column(name = "table_id", nullable = false, length = 36)
+    @Column(name = "table_id", nullable = false, length = 36 , columnDefinition = "char(36)")
     private String tableId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -31,10 +31,8 @@ public class RestaurantTable {
     @Column(name = "seating_capacity", nullable = false)
     private Integer seatingCapacity;
 
-    @ColumnDefault("'AVAILABLE'")
-    @Lob
-    @Column(name = "status")
-    private String status;
+    @Column(length = 20, nullable = false)
+    private String status = "AVAILABLE";
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")

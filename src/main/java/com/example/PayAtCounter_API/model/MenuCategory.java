@@ -16,7 +16,7 @@ import org.hibernate.annotations.OnDeleteAction;
 })
 public class MenuCategory {
     @Id
-    @Column(name = "category_id", nullable = false, length = 36)
+    @Column(name = "category_id", nullable = false, length = 36 , columnDefinition = "char(36)")
     private String categoryId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

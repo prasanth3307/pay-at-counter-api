@@ -17,7 +17,7 @@ import java.time.Instant;
 })
 public class Inventory {
     @Id
-    @Column(name = "inventory_id", nullable = false, length = 36)
+    @Column(name = "inventory_id", nullable = false, length = 36 , columnDefinition = "char(36)")
     private String inventoryId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
