@@ -10,6 +10,9 @@ import org.hibernate.annotations.OnDeleteAction;
 import java.math.BigDecimal;
 import java.time.Instant;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @Getter
 @Setter
 @Entity
@@ -27,6 +30,7 @@ public class Store {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "vendor_id", nullable = false)
+    @JsonIgnore
     private VendorProfile vendor;
 
     @Column(name = "store_name", nullable = false)
@@ -51,5 +55,10 @@ public class Store {
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "updated_at")
     private Instant updatedAt;
+
+    @JsonProperty("vendor_id")
+    public String getVendorId() {
+        return vendor != null ? vendor.getVendorId() : null;
+    }
 
 }
