@@ -8,59 +8,38 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
-@RequestMapping("/api/tables")
+@RequestMapping("/api/restaurant-tables")
 @RequiredArgsConstructor
 public class RestaurantTableController {
 
     private final RestaurantTableService restaurantTableService;
 
-    @PostMapping
-    public ResponseEntity<RestaurantTableDTO> createTable(@RequestBody RestaurantTableDTO tableDTO) {
-        RestaurantTableDTO createdTable = restaurantTableService.createTable(tableDTO);
+    @PostMapping("/create")
+    public ResponseEntity<RestaurantTableDTO> createRestaurantTable(
+            @RequestParam String vendorId,
+            @RequestParam String storeId,
+            @RequestBody RestaurantTableDTO tableDTO) {
+        RestaurantTableDTO createdTable = restaurantTableService.createTable(vendorId, storeId, tableDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTable);
     }
 
-    @GetMapping
-    public ResponseEntity<List<RestaurantTableDTO>> getAllTables() {
-        List<RestaurantTableDTO> tables = restaurantTableService.getAllTables();
-        return ResponseEntity.ok(tables);
-    }
-
-    @PutMapping("/{tableId}")
-    public ResponseEntity<RestaurantTableDTO> updateTable(
+    @PatchMapping("/update/{tableId}")
+    public ResponseEntity<RestaurantTableDTO> updateRestaurantTable(
             @PathVariable String tableId,
+            @RequestParam String vendorId,
+            @RequestParam String storeId,
             @RequestBody RestaurantTableDTO tableDTO) {
-        RestaurantTableDTO updated = restaurantTableService.updateTable(tableId, tableDTO);
+        RestaurantTableDTO updated = restaurantTableService.updateTable(tableId, vendorId, storeId, tableDTO);
         return ResponseEntity.ok(updated);
     }
 
-    @PatchMapping("/{tableId}/table-number")
-    public ResponseEntity<RestaurantTableDTO> updateTableNumber(
-            @PathVariable String tableId,
-            @RequestBody Map<String, Integer> body) {
-        RestaurantTableDTO updated = restaurantTableService.updateTableNumber(
-                tableId, body.get("tableNumber"));
-        return ResponseEntity.ok(updated);
-    }
-
-    @PatchMapping("/{tableId}/seating-capacity")
-    public ResponseEntity<RestaurantTableDTO> updateSeatingCapacity(
-            @PathVariable String tableId,
-            @RequestBody Map<String, Integer> body) {
-        RestaurantTableDTO updated = restaurantTableService.updateSeatingCapacity(
-                tableId, body.get("seatingCapacity"));
-        return ResponseEntity.ok(updated);
-    }
-
-    @PatchMapping("/{tableId}/status")
-    public ResponseEntity<RestaurantTableDTO> updateStatus(
-            @PathVariable String tableId,
-            @RequestBody Map<String, String> body) {
-        RestaurantTableDTO updated = restaurantTableService.updateStatus(
-                tableId, body.get("status"));
-        return ResponseEntity.ok(updated);
+    @GetMapping("/get-by-store/{storeId}")
+    public ResponseEntity<List<RestaurantTableDTO>> getTablesByStoreAndVendor(
+            @PathVariable String storeId,
+            @RequestParam String vendorId) {
+        List<RestaurantTableDTO> tables = restaurantTableService.getTablesByStoreAndVendor(storeId, vendorId);
+        return ResponseEntity.ok(tables);
     }
 }
