@@ -3,15 +3,16 @@ package com.example.PayAtCounter_API.service;
 import com.example.PayAtCounter_API.dto.RestaurantTableDTO;
 import com.example.PayAtCounter_API.model.RestaurantTable;
 import com.example.PayAtCounter_API.model.Store;
+import com.example.PayAtCounter_API.model.VendorProfile;
 import com.example.PayAtCounter_API.repository.RestaurantTableRepository;
 import com.example.PayAtCounter_API.repository.StoreRepository;
+import com.example.PayAtCounter_API.repository.VendorProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,26 +21,51 @@ public class RestaurantTableService {
 
     private final RestaurantTableRepository restaurantTableRepository;
     private final StoreRepository storeRepository;
+    private final VendorProfileRepository vendorProfileRepository;
 
-    public List<RestaurantTableDTO> getAllTables() {
-        List<RestaurantTable> tables = restaurantTableRepository.findAll();
+    public List<RestaurantTableDTO> getTablesByStoreAndVendor(String storeId, String vendorId) {
+        VendorProfile vendor = vendorProfileRepository.findById(vendorId)
+                .orElseThrow(() -> new RuntimeException("Vendor not found with ID: " + vendorId));
 
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new RuntimeException("Store not found with ID: " + storeId));
+
+        if (!store.getVendor().getVendorId().equals(vendorId)) {
+            throw new RuntimeException("Store " + storeId + " does not belong to vendor " + vendorId);
+        }
+
+        List<RestaurantTable> tables = restaurantTableRepository.findByStore_StoreId(storeId);
         return tables.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public RestaurantTableDTO createTable(RestaurantTableDTO tableDTO) {
-        if (restaurantTableRepository.findById(tableDTO.getTableId()).isPresent()) {
-            throw new RuntimeException("Table ID already exists: " + tableDTO.getTableId());
+    public RestaurantTableDTO createTable(String vendorId, String storeId, RestaurantTableDTO tableDTO) {
+        VendorProfile vendor = vendorProfileRepository.findById(vendorId)
+                .orElseThrow(() -> new RuntimeException("Vendor not found with ID: " + vendorId));
+
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new RuntimeException("Store not found with ID: " + storeId));
+
+        if (!store.getVendor().getVendorId().equals(vendorId)) {
+            throw new RuntimeException("Store " + storeId + " does not belong to vendor " + vendorId);
         }
 
-        Store store = storeRepository.findById(tableDTO.getStoreId())
-                .orElseThrow(() -> new RuntimeException("Store not found with ID: " + tableDTO.getStoreId()));
+        if (tableDTO.getTableNumber() == null) {
+            throw new RuntimeException("Table number is required");
+        }
+        if (tableDTO.getSeatingCapacity() == null) {
+            throw new RuntimeException("Seating capacity is required");
+        }
+        if (tableDTO.getStatus() == null || tableDTO.getStatus().isEmpty()) {
+            throw new RuntimeException("Status is required");
+        }
+
+        String generatedTableId = generateTableId();
 
         RestaurantTable table = new RestaurantTable();
-        table.setTableId(tableDTO.getTableId());
+        table.setTableId(generatedTableId);
         table.setStore(store);
         table.setTableNumber(tableDTO.getTableNumber());
         table.setSeatingCapacity(tableDTO.getSeatingCapacity());
@@ -50,22 +76,25 @@ public class RestaurantTableService {
         return convertToDTO(savedTable);
     }
 
-    private RestaurantTableDTO convertToDTO(RestaurantTable table) {
-        return new RestaurantTableDTO(
-                table.getTableId(),
-                table.getStore().getStoreId(),
-                table.getTableNumber(),
-                table.getSeatingCapacity(),
-                table.getStatus(),
-                table.getCreatedAt()
-        );
-    }
     @Transactional
-    public RestaurantTableDTO updateTable(String tableId, RestaurantTableDTO tableDTO) {
-        RestaurantTable table = restaurantTableRepository.findById(tableId)
-                .orElseThrow(() -> new RuntimeException("Table not found with ID: " + tableId));
+    public RestaurantTableDTO updateTable(String tableId, String vendorId, String storeId, RestaurantTableDTO tableDTO) {
+        VendorProfile vendor = vendorProfileRepository.findById(vendorId)
+                .orElseThrow(() -> new RuntimeException("Vendor not found with ID: " + vendorId));
 
-        // Only update fields that are provided (not null)
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new RuntimeException("Store not found with ID: " + storeId));
+
+        if (!store.getVendor().getVendorId().equals(vendorId)) {
+            throw new RuntimeException("Store " + storeId + " does not belong to vendor " + vendorId);
+        }
+
+        RestaurantTable table = restaurantTableRepository.findById(tableId)
+                .orElseThrow(() -> new RuntimeException("Restaurant table not found with ID: " + tableId));
+
+        if (!table.getStore().getStoreId().equals(storeId)) {
+            throw new RuntimeException("Table " + tableId + " does not belong to store " + storeId);
+        }
+
         if (tableDTO.getTableNumber() != null) {
             table.setTableNumber(tableDTO.getTableNumber());
         }
@@ -79,35 +108,36 @@ public class RestaurantTableService {
         RestaurantTable updatedTable = restaurantTableRepository.save(table);
         return convertToDTO(updatedTable);
     }
-    @Transactional
-    public RestaurantTableDTO updateTableNumber(String tableId, Integer newTableNumber) {
-        RestaurantTable table = restaurantTableRepository.findById(tableId)
-                .orElseThrow(() -> new RuntimeException("Table not found"));
 
-        table.setTableNumber(newTableNumber);
+    private String generateTableId() {
+        List<RestaurantTable> allTables = restaurantTableRepository.findAll();
 
-        RestaurantTable updatedTable = restaurantTableRepository.save(table);
-        return convertToDTO(updatedTable);
+        int maxNumber = 0;
+        for (RestaurantTable table : allTables) {
+            String tableId = table.getTableId();
+            if (tableId.startsWith("T")) {
+                try {
+                    int number = Integer.parseInt(tableId.substring(1));
+                    if (number > maxNumber) {
+                        maxNumber = number;
+                    }
+                } catch (NumberFormatException e) {
+                    // Skip non-numeric IDs
+                }
+            }
+        }
+
+        return String.format("T%03d", maxNumber + 1);
     }
-    @Transactional
-    public RestaurantTableDTO updateSeatingCapacity(String tableId, Integer newCapacity) {
-        RestaurantTable table = restaurantTableRepository.findById(tableId)
-                .orElseThrow(() -> new RuntimeException("Table not found"));
 
-        table.setSeatingCapacity(newCapacity);
-
-        RestaurantTable updatedTable = restaurantTableRepository.save(table);
-        return convertToDTO(updatedTable);
-    }
-    @Transactional
-    public RestaurantTableDTO updateStatus(String tableId, String newStatus) {
-        RestaurantTable table = restaurantTableRepository.findById(tableId)
-                .orElseThrow(() -> new RuntimeException("Table not found"));
-
-        table.setStatus(newStatus);
-
-        RestaurantTable updatedTable = restaurantTableRepository.save(table);
-        return convertToDTO(updatedTable);
+    private RestaurantTableDTO convertToDTO(RestaurantTable table) {
+        return new RestaurantTableDTO(
+                table.getTableId(),
+                table.getStore().getStoreId(),
+                table.getTableNumber(),
+                table.getSeatingCapacity(),
+                table.getStatus(),
+                table.getCreatedAt()
+        );
     }
 }
-
